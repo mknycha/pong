@@ -16,7 +16,69 @@ import (
 
 const windowWidth = 800
 const windowHeight = 600
-const thickness = 5
+
+// This kind of enum in GO
+type gameState int
+
+const (
+	start gameState = iota
+	play
+)
+
+// till here
+var state = start
+
+var nums = [][]byte{
+	{
+		1, 1, 1,
+		1, 0, 1,
+		1, 0, 1,
+		1, 0, 1,
+		1, 1, 1,
+	},
+	{
+		1, 1, 0,
+		0, 1, 0,
+		0, 1, 0,
+		0, 1, 0,
+		1, 1, 1,
+	},
+	{
+		1, 1, 1,
+		0, 0, 1,
+		1, 1, 1,
+		1, 0, 0,
+		1, 1, 1,
+	},
+	{
+		1, 1, 1,
+		0, 0, 1,
+		0, 1, 1,
+		0, 0, 1,
+		1, 1, 1,
+	},
+}
+
+func drawNumber(pos pos, color color, size int, num int, pixels []byte) {
+	startX := int(pos.x) - (size*3)/2
+	startY := int(pos.y) - (size*5)/2
+
+	for i, v := range nums[num] {
+		if v == 1 {
+			for y := startY; y < startY+size; y++ {
+				for x := startX; x < startX+size; x++ {
+					setPixel(x, y, color, pixels)
+				}
+			}
+		}
+		startX += size
+		// Once we have drawn three squares, we are going down by one square and left by three squares
+		if (i+1)%3 == 0 {
+			startY += size
+			startX -= size * 3
+		}
+	}
+}
 
 type color struct {
 	r, g, b byte
@@ -25,140 +87,6 @@ type color struct {
 // The position is relative to the left upper conrner of the screen
 type pos struct {
 	x, y float32
-}
-
-type score struct {
-	pos
-	h      float32
-	w      float32
-	num    int
-	scored func() bool
-}
-
-func (score *score) top(pixels []byte) {
-	for y := score.y - score.h/2; y < score.y-score.h/2+thickness; y++ {
-		for x := score.x - score.w/2; x < score.x+score.w/2; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-
-func (score *score) bottom(pixels []byte) {
-	for y := score.y + score.h/2 - thickness; y < score.y+score.h/2; y++ {
-		for x := score.x - score.w/2; x < score.x+score.w/2; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-
-func (score *score) upperLeft(pixels []byte) {
-	for y := score.y - score.h/2; y < score.y; y++ {
-		for x := score.x - score.w/2; x < score.x-score.w/2+thickness; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-func (score *score) lowerLeft(pixels []byte) {
-	for y := score.y; y < score.y+score.h/2; y++ {
-		for x := score.x - score.w/2; x < score.x-score.w/2+thickness; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-func (score *score) upperRight(pixels []byte) {
-	for y := score.y - score.h/2; y < score.y; y++ {
-		for x := score.x + score.w/2 - thickness; x < score.x+score.w/2; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-func (score *score) lowerRight(pixels []byte) {
-	for y := score.y; y < score.y+score.h/2; y++ {
-		for x := score.x + score.w/2 - thickness; x < score.x+score.w/2; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-
-func (score *score) middle(pixels []byte) {
-	for y := score.y - thickness/2; y < score.y+thickness/2; y++ {
-		for x := score.x - score.w/2; x < score.x+score.w/2; x++ {
-			setPixel(int(x), int(y), color{255, 255, 255}, pixels)
-		}
-	}
-}
-
-func (score *score) draw(pixels []byte) {
-	switch score.num {
-	case 0:
-		score.bottom(pixels)
-		score.lowerLeft(pixels)
-		score.upperLeft(pixels)
-		score.lowerRight(pixels)
-		score.upperRight(pixels)
-		score.top(pixels)
-	case 1:
-		score.lowerRight(pixels)
-		score.upperRight(pixels)
-	case 2:
-		score.bottom(pixels)
-		score.lowerLeft(pixels)
-		score.upperRight(pixels)
-		score.top(pixels)
-		score.middle(pixels)
-	case 3:
-		score.bottom(pixels)
-		score.lowerRight(pixels)
-		score.upperRight(pixels)
-		score.top(pixels)
-		score.middle(pixels)
-	case 4:
-		score.upperLeft(pixels)
-		score.lowerRight(pixels)
-		score.upperRight(pixels)
-		score.middle(pixels)
-	case 5:
-		score.top(pixels)
-		score.upperLeft(pixels)
-		score.lowerRight(pixels)
-		score.middle(pixels)
-		score.bottom(pixels)
-	case 6:
-		score.top(pixels)
-		score.upperLeft(pixels)
-		score.lowerRight(pixels)
-		score.middle(pixels)
-		score.lowerLeft(pixels)
-		score.bottom(pixels)
-	case 7:
-		score.top(pixels)
-		score.upperRight(pixels)
-		score.lowerRight(pixels)
-	case 8:
-		score.top(pixels)
-		score.upperLeft(pixels)
-		score.upperRight(pixels)
-		score.lowerRight(pixels)
-		score.middle(pixels)
-		score.lowerLeft(pixels)
-		score.bottom(pixels)
-	case 9:
-		score.top(pixels)
-		score.upperLeft(pixels)
-		score.upperRight(pixels)
-		score.lowerRight(pixels)
-		score.middle(pixels)
-		score.bottom(pixels)
-	}
-}
-
-func (score *score) update(ball *ball) {
-	if score.scored() {
-		score.num++
-		if score.num > 9 {
-			score.num = 0
-		}
-	}
 }
 
 type ball struct {
@@ -193,18 +121,26 @@ func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime fl
 		ball.yv = -ball.yv
 	}
 
-	if ball.x-ball.radius < 0 || ball.x+ball.radius > windowWidth {
+	if ball.x-ball.radius < 0 {
+		rightPaddle.score++
 		ball.pos = getCenter()
+		state = start
+	} else if ball.x+ball.radius > windowWidth {
+		leftPaddle.score++
+		ball.pos = getCenter()
+		state = start
 	}
 
 	if ball.x-ball.radius < leftPaddle.x+leftPaddle.w/2 {
 		if ball.y < leftPaddle.y+leftPaddle.h/2 && ball.y > leftPaddle.y-leftPaddle.h/2 {
 			ball.xv = -ball.xv
+			ball.x = leftPaddle.x + leftPaddle.w/2.0 + ball.radius
 		}
 	}
 	if ball.x+ball.radius > rightPaddle.x-rightPaddle.w/2 {
 		if ball.y < rightPaddle.y+rightPaddle.h/2 && ball.y > rightPaddle.y-rightPaddle.h/2 {
 			ball.xv = -ball.xv
+			ball.x = rightPaddle.x - rightPaddle.w/2.0 - ball.radius
 		}
 	}
 }
@@ -214,7 +150,12 @@ type paddle struct {
 	w     float32
 	h     float32
 	speed float32
+	score int
 	color color
+}
+
+func lerp(a float32, b float32, pct float32) float32 {
+	return a + pct*(b-a)
 }
 
 func (paddle *paddle) draw(pixels []byte) {
@@ -231,6 +172,9 @@ func (paddle *paddle) draw(pixels []byte) {
 			setPixel(startX+x, startY+y, paddle.color, pixels)
 		}
 	}
+
+	numX := lerp(paddle.x, getCenter().x, 0.2)
+	drawNumber(pos{numX, 35}, paddle.color, 10, paddle.score, pixels)
 }
 
 func (paddle *paddle) update(keyState []uint8, elapsedTime float32) {
@@ -297,15 +241,9 @@ func main() {
 	// 	sdl.PushEvent(&e)
 	// }()
 
-	player1 := paddle{pos{50, 100}, 20, 100, 300, color{255, 255, 255}}
-	player2 := paddle{pos{windowWidth - 50, 100}, 20, 100, 300, color{255, 255, 255}}
+	player1 := paddle{pos{50, 100}, 20, 100, 300, 0, color{255, 255, 255}}
+	player2 := paddle{pos{windowWidth - 50, 100}, 20, 100, 300, 0, color{255, 255, 255}}
 	ball := ball{pos{300, 300}, 20, 400, 400, color{255, 255, 255}}
-	player1Score := score{pos{180, 100}, 70, 40, 0, func() bool {
-		return ball.x+ball.radius > windowWidth
-	}}
-	player2Score := score{pos{windowWidth - 180, 100}, 70, 40, 0, func() bool {
-		return ball.x-ball.radius < 0
-	}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -325,19 +263,24 @@ func main() {
 				break
 			}
 		}
+		if state == play {
+			player1.update(keyState, elapsedTime)
+			player2.aiUpdate(&ball, elapsedTime)
+			ball.update(&player1, &player2, elapsedTime)
+		} else if state == start {
+			if keyState[sdl.SCANCODE_SPACE] != 0 {
+				if player1.score == 3 || player2.score == 3 {
+					player1.score = 0
+					player2.score = 0
+				}
+				state = play
+			}
+		}
+
 		clear(pixels)
-
-		player1Score.update(&ball)
-		player2Score.update(&ball)
-		player1.update(keyState, elapsedTime)
-		player2.aiUpdate(&ball, elapsedTime)
-		ball.update(&player1, &player2, elapsedTime)
-
 		player1.draw(pixels)
 		player2.draw(pixels)
 		ball.draw(pixels)
-		player1Score.draw(pixels)
-		player2Score.draw(pixels)
 
 		tex.Update(nil, pixels, windowWidth*4)
 		renderer.Copy(tex, nil, nil)
