@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -177,11 +178,17 @@ func (paddle *paddle) draw(pixels []byte) {
 	drawNumber(pos{numX, 35}, paddle.color, 10, paddle.score, pixels)
 }
 
-func (paddle *paddle) update(keyState []uint8, elapsedTime float32) {
+func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime float32) {
 	if keyState[sdl.SCANCODE_UP] != 0 {
 		paddle.y -= paddle.speed * elapsedTime
 	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
 		paddle.y += paddle.speed * elapsedTime
+	}
+
+	// println(float64(controllerAxis))
+	if math.Abs(float64(controllerAxis)) > 1500 {
+		pct := float32(controllerAxis) / 32767.0
+		paddle.y += paddle.speed * pct * elapsedTime
 	}
 }
 
@@ -233,6 +240,12 @@ func main() {
 	}
 	defer tex.Destroy()
 
+	var controllerHandlers []*sdl.GameController
+	for i := 0; i < sdl.NumJoysticks(); i++ {
+		controllerHandlers = append(controllerHandlers, sdl.GameControllerOpen(i))
+		defer controllerHandlers[i].Close()
+	}
+
 	pixels := make([]byte, windowWidth*windowHeight*4)
 
 	// go func() {
@@ -251,6 +264,7 @@ func main() {
 		frameStart  time.Time
 		elapsedTime float32
 	)
+	var controllerAxis int16
 
 	running := true
 	for running {
@@ -263,8 +277,14 @@ func main() {
 				break
 			}
 		}
+		for _, controller := range controllerHandlers {
+			if controller != nil {
+				println(controller)
+				controllerAxis = controller.Axis(sdl.CONTROLLER_AXIS_LEFTY)
+			}
+		}
 		if state == play {
-			player1.update(keyState, elapsedTime)
+			player1.update(keyState, controllerAxis, elapsedTime)
 			player2.aiUpdate(&ball, elapsedTime)
 			ball.update(&player1, &player2, elapsedTime)
 		} else if state == start {
