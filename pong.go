@@ -9,7 +9,6 @@ import (
 )
 
 // TODO
-// Make the ball bounce differently depending on the point of paddle it hits
 // Make the ball go faster and faster with each bounce
 // Fix the ball collision with top and bottom of the screen
 // Ai needs to be more imperfect
@@ -17,7 +16,8 @@ import (
 
 const windowWidth = 800
 const windowHeight = 600
-const ballYVMultiplier = 130
+const paddleConvexityEffectMultiplier = 150
+const paddleVelocityEffectMultiplier = 15
 
 // This kind of enum in GO
 type gameState int
@@ -137,18 +137,20 @@ func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime fl
 		if ball.y < leftPaddle.y+leftPaddle.h/2 && ball.y > leftPaddle.y-leftPaddle.h/2 {
 			ball.xv = -ball.xv
 			ball.x = leftPaddle.x + leftPaddle.w/2.0 + ball.radius
-			if leftPaddle.yv != 0 {
-				ball.yv += leftPaddle.yv * elapsedTime * ballYVMultiplier
-			}
+			// handle bouncing angles differently closer the paddle edges (to the outside)
+			ball.yv += (ball.y - leftPaddle.y) * elapsedTime * paddleConvexityEffectMultiplier
+			// pass velocity of the moving paddle to the bar
+			ball.yv += leftPaddle.yv * elapsedTime * paddleVelocityEffectMultiplier
 		}
 	}
 	if ball.x+ball.radius > rightPaddle.x-rightPaddle.w/2 {
 		if ball.y < rightPaddle.y+rightPaddle.h/2 && ball.y > rightPaddle.y-rightPaddle.h/2 {
 			ball.xv = -ball.xv
 			ball.x = rightPaddle.x - rightPaddle.w/2.0 - ball.radius
-			if rightPaddle.yv != 0 {
-				ball.yv += leftPaddle.yv * elapsedTime * ballYVMultiplier
-			}
+			// handle bouncing angles differently closer the paddle edges (to the outside)
+			ball.yv += (ball.y - rightPaddle.y) * elapsedTime * paddleConvexityEffectMultiplier
+			// pass velocity of the moving paddle to the bar
+			ball.yv += rightPaddle.yv * elapsedTime * paddleVelocityEffectMultiplier
 		}
 	}
 }
