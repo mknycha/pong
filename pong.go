@@ -9,14 +9,15 @@ import (
 )
 
 // TODO
-// Frame rate independence
-// Score
-// Game over rate
-// PvP ?
+// Make the ball bounce differently depending on the point of paddle it hits
+// Make the ball go faster and faster with each bounce
+// Fix the ball collision with top and bottom of the screen
 // Ai needs to be more imperfect
+// PvP ?
 
 const windowWidth = 800
 const windowHeight = 600
+const ballYVMultiplier = 130
 
 // This kind of enum in GO
 type gameState int
@@ -136,12 +137,18 @@ func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime fl
 		if ball.y < leftPaddle.y+leftPaddle.h/2 && ball.y > leftPaddle.y-leftPaddle.h/2 {
 			ball.xv = -ball.xv
 			ball.x = leftPaddle.x + leftPaddle.w/2.0 + ball.radius
+			if leftPaddle.yv != 0 {
+				ball.yv += leftPaddle.yv * elapsedTime * ballYVMultiplier
+			}
 		}
 	}
 	if ball.x+ball.radius > rightPaddle.x-rightPaddle.w/2 {
 		if ball.y < rightPaddle.y+rightPaddle.h/2 && ball.y > rightPaddle.y-rightPaddle.h/2 {
 			ball.xv = -ball.xv
 			ball.x = rightPaddle.x - rightPaddle.w/2.0 - ball.radius
+			if rightPaddle.yv != 0 {
+				ball.yv += leftPaddle.yv * elapsedTime * ballYVMultiplier
+			}
 		}
 	}
 }
@@ -153,6 +160,7 @@ type paddle struct {
 	speed float32
 	score int
 	color color
+	yv    float32
 }
 
 func lerp(a float32, b float32, pct float32) float32 {
@@ -181,11 +189,14 @@ func (paddle *paddle) draw(pixels []byte) {
 func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime float32) {
 	if keyState[sdl.SCANCODE_UP] != 0 {
 		paddle.y -= paddle.speed * elapsedTime
+		paddle.yv = -paddle.speed
 	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
 		paddle.y += paddle.speed * elapsedTime
+		paddle.yv = paddle.speed
+	} else {
+		paddle.yv = 0
 	}
 
-	// println(float64(controllerAxis))
 	if math.Abs(float64(controllerAxis)) > 1500 {
 		pct := float32(controllerAxis) / 32767.0
 		paddle.y += paddle.speed * pct * elapsedTime
@@ -254,9 +265,9 @@ func main() {
 	// 	sdl.PushEvent(&e)
 	// }()
 
-	player1 := paddle{pos{50, 100}, 20, 100, 300, 0, color{255, 255, 255}}
-	player2 := paddle{pos{windowWidth - 50, 100}, 20, 100, 300, 0, color{255, 255, 255}}
-	ball := ball{pos{300, 300}, 20, 400, 400, color{255, 255, 255}}
+	player1 := paddle{pos{50, windowHeight / 2}, 20, 100, 300, 0, color{255, 255, 255}, 0}
+	player2 := paddle{pos{windowWidth - 50, windowHeight / 2}, 20, 100, 300, 0, color{255, 255, 255}, 0}
+	ball := ball{pos{300, 300}, 20, 400, 0, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -293,6 +304,9 @@ func main() {
 					player1.score = 0
 					player2.score = 0
 				}
+				ball.yv = 0
+				player1.y = windowHeight / 2
+				player2.y = windowHeight / 2
 				state = play
 			}
 		}
