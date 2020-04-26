@@ -10,7 +10,7 @@ import (
 
 // TODO
 // Make the ball go faster and faster with each bounce
-// Fix the ball collision with top and bottom of the screen
+// Make the paddle unable to go out of the screen
 // PvP ?
 
 const windowWidth = 800
@@ -118,8 +118,13 @@ func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime fl
 	ball.x += ball.xv * elapsedTime
 	ball.y += ball.yv * elapsedTime
 
-	if ball.y-ball.radius < 0 || ball.y+ball.radius > windowHeight { // bounce from the top or bottom of the screen
+	if ball.y-ball.radius < 0 { // bounce from the bottom of the screen
 		ball.yv = -ball.yv
+		ball.y = ball.radius
+	}
+	if ball.y+ball.radius > windowHeight { // bounce from the top of the screen
+		ball.yv = -ball.yv
+		ball.y = windowHeight - ball.radius
 	}
 
 	if ball.x-ball.radius < 0 {
