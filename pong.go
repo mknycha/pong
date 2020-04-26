@@ -11,7 +11,6 @@ import (
 // TODO
 // Make the ball go faster and faster with each bounce
 // Fix the ball collision with top and bottom of the screen
-// Ai needs to be more imperfect
 // PvP ?
 
 const windowWidth = 800
@@ -206,7 +205,15 @@ func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime
 }
 
 func (paddle *paddle) aiUpdate(ball *ball, elapsedTime float32) {
-	paddle.y = ball.y
+	if paddle.y < ball.y { // ball is above, paddle moves up
+		paddle.y += paddle.speed * elapsedTime
+		paddle.yv = paddle.speed
+	} else if paddle.y > ball.y { // ball is below, paddle moves down
+		paddle.y -= paddle.speed * elapsedTime
+		paddle.yv = -paddle.speed
+	} else {
+		paddle.yv = 0
+	}
 }
 
 func clear(pixels []byte) {
