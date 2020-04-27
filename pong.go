@@ -9,13 +9,14 @@ import (
 )
 
 // TODO
-// Make the ball go faster and faster with each bounce
 // PvP ?
 
 const windowWidth = 800
 const windowHeight = 600
 const paddleConvexityEffectMultiplier = 150
 const paddleVelocityEffectMultiplier = 15
+const velocityAfterBounceMultiplier = 1.01
+const initialBallXV = 400
 
 // This kind of enum in GO
 type gameState int
@@ -138,7 +139,7 @@ func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime fl
 
 	if ball.x-ball.radius < leftPaddle.x+leftPaddle.w/2 {
 		if ball.y < leftPaddle.y+leftPaddle.h/2 && ball.y > leftPaddle.y-leftPaddle.h/2 {
-			ball.xv = -ball.xv
+			ball.xv = -ball.xv * velocityAfterBounceMultiplier
 			ball.x = leftPaddle.x + leftPaddle.w/2.0 + ball.radius
 			// handle bouncing angles differently closer the paddle edges (to the outside)
 			ball.yv += (ball.y - leftPaddle.y) * elapsedTime * paddleConvexityEffectMultiplier
@@ -148,7 +149,7 @@ func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime fl
 	}
 	if ball.x+ball.radius > rightPaddle.x-rightPaddle.w/2 {
 		if ball.y < rightPaddle.y+rightPaddle.h/2 && ball.y > rightPaddle.y-rightPaddle.h/2 {
-			ball.xv = -ball.xv
+			ball.xv = -ball.xv * velocityAfterBounceMultiplier
 			ball.x = rightPaddle.x - rightPaddle.w/2.0 - ball.radius
 			// handle bouncing angles differently closer the paddle edges (to the outside)
 			ball.yv += (ball.y - rightPaddle.y) * elapsedTime * paddleConvexityEffectMultiplier
@@ -274,15 +275,9 @@ func main() {
 
 	pixels := make([]byte, windowWidth*windowHeight*4)
 
-	// go func() {
-	// 	sdl.Delay(5000)
-	// 	e := sdl.QuitEvent{Type: sdl.QUIT}
-	// 	sdl.PushEvent(&e)
-	// }()
-
 	player1 := paddle{pos{50, windowHeight / 2}, 20, 100, 300, 0, color{255, 255, 255}, 0}
 	player2 := paddle{pos{windowWidth - 50, windowHeight / 2}, 20, 100, 300, 0, color{255, 255, 255}, 0}
-	ball := ball{pos{300, 300}, 20, 400, 0, color{255, 255, 255}}
+	ball := ball{pos{300, 300}, 20, initialBallXV, 0, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -319,7 +314,13 @@ func main() {
 					player1.score = 0
 					player2.score = 0
 				}
+				// reset ball speed, but keep the direction
 				ball.yv = 0
+				if ball.xv < 0 {
+					ball.xv = -initialBallXV
+				} else {
+					ball.xv = initialBallXV
+				}
 				player1.y = windowHeight / 2
 				player2.y = windowHeight / 2
 				state = play
