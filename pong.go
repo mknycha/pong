@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -83,6 +82,10 @@ func drawNumber(pos pos, color color, size int, num int, pixels []byte) {
 	}
 }
 
+func lerp(a float32, b float32, pct float32) float32 {
+	return a + pct*(b-a)
+}
+
 type color struct {
 	r, g, b byte
 }
@@ -92,138 +95,9 @@ type pos struct {
 	x, y float32
 }
 
-type ball struct {
-	// pos    pos //this is composition, the x would be referred to as ball.pos.x
-	pos    // this birngs one struct into another, this allows us to refer to ball.x. It copies all the functions too!
-	radius float32
-	xv     float32
-	yv     float32
-	color  color
-}
-
-func (ball *ball) draw(pixels []byte) {
-	for y := -ball.radius; y < ball.radius; y++ {
-		for x := -ball.radius; x < ball.radius; x++ {
-			if x*x+y*y < ball.radius*ball.radius {
-				setPixel(int(ball.x+x), int(ball.y+y), ball.color, pixels)
-			}
-		}
-	}
-}
-
 // Returns center of the screen
 func getCenter() pos {
 	return pos{float32(windowWidth) / 2, float32(windowHeight) / 2}
-}
-
-func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime float32) {
-	ball.x += ball.xv * elapsedTime
-	ball.y += ball.yv * elapsedTime
-
-	if ball.y-ball.radius < 0 { // bounce from the bottom of the screen
-		ball.yv = -ball.yv
-		ball.y = ball.radius
-	}
-	if ball.y+ball.radius > windowHeight { // bounce from the top of the screen
-		ball.yv = -ball.yv
-		ball.y = windowHeight - ball.radius
-	}
-
-	if ball.x-ball.radius < 0 {
-		rightPaddle.score++
-		ball.pos = getCenter()
-		state = start
-	} else if ball.x+ball.radius > windowWidth {
-		leftPaddle.score++
-		ball.pos = getCenter()
-		state = start
-	}
-
-	if ball.x-ball.radius < leftPaddle.x+leftPaddle.w/2 {
-		if ball.y < leftPaddle.y+leftPaddle.h/2 && ball.y > leftPaddle.y-leftPaddle.h/2 {
-			ball.xv = -ball.xv * velocityAfterBounceMultiplier
-			ball.x = leftPaddle.x + leftPaddle.w/2.0 + ball.radius
-			// handle bouncing angles differently closer the paddle edges (to the outside)
-			ball.yv += (ball.y - leftPaddle.y) * elapsedTime * paddleConvexityEffectMultiplier
-			// pass velocity of the moving paddle to the bar
-			ball.yv += leftPaddle.yv * elapsedTime * paddleVelocityEffectMultiplier
-		}
-	}
-	if ball.x+ball.radius > rightPaddle.x-rightPaddle.w/2 {
-		if ball.y < rightPaddle.y+rightPaddle.h/2 && ball.y > rightPaddle.y-rightPaddle.h/2 {
-			ball.xv = -ball.xv * velocityAfterBounceMultiplier
-			ball.x = rightPaddle.x - rightPaddle.w/2.0 - ball.radius
-			// handle bouncing angles differently closer the paddle edges (to the outside)
-			ball.yv += (ball.y - rightPaddle.y) * elapsedTime * paddleConvexityEffectMultiplier
-			// pass velocity of the moving paddle to the bar
-			ball.yv += rightPaddle.yv * elapsedTime * paddleVelocityEffectMultiplier
-		}
-	}
-}
-
-type paddle struct {
-	pos
-	w     float32
-	h     float32
-	speed float32
-	score int
-	color color
-	yv    float32
-}
-
-func lerp(a float32, b float32, pct float32) float32 {
-	return a + pct*(b-a)
-}
-
-func (paddle *paddle) draw(pixels []byte) {
-	startX := int(paddle.x - paddle.w/2)
-	startY := int(paddle.y - paddle.h/2)
-
-	// There is a reason to start with y, because it uses ram cache
-	// If we load to our RAM 0, 1, 2, 3, 4, 5, 6, 7, 8 we will go through order and be in cache
-	// 0, 1, 2,
-	// 3, 4, 5,
-	// 6, 7, 8
-	for y := 0; y < int(paddle.h); y++ {
-		for x := 0; x < int(paddle.w); x++ {
-			setPixel(startX+x, startY+y, paddle.color, pixels)
-		}
-	}
-
-	numX := lerp(paddle.x, getCenter().x, 0.2)
-	drawNumber(pos{numX, 35}, paddle.color, 10, paddle.score, pixels)
-}
-
-func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime float32) {
-	if keyState[sdl.SCANCODE_UP] != 0 && paddle.y > 0 {
-		paddle.y -= paddle.speed * elapsedTime
-		paddle.yv = -paddle.speed
-	} else if keyState[sdl.SCANCODE_DOWN] != 0 && paddle.y < windowHeight {
-		paddle.y += paddle.speed * elapsedTime
-		paddle.yv = paddle.speed
-	} else {
-		paddle.yv = 0
-	}
-
-	if math.Abs(float64(controllerAxis)) > 1500 {
-		pct := float32(controllerAxis) / 32767.0
-		paddle.y += paddle.speed * pct * elapsedTime
-	}
-}
-
-func (paddle *paddle) aiUpdate(ball *ball, elapsedTime float32) {
-	if (paddle.x - ball.x) < (float32(windowWidth) * 3 / 4) { // ball is close enough to be "seen"
-		// paddlePixelsRangeForCalculation is used so that paddle is not moved with pixel precision
-		if (paddle.y + paddlePixelsRangeForCalculation) < ball.y { // ball is above, paddle moves up
-			paddle.y += paddle.speed * elapsedTime
-			paddle.yv = paddle.speed
-		} else if (paddle.y-paddlePixelsRangeForCalculation) > ball.y && (paddle.x-ball.x) < (float32(windowWidth)*3/4) { // ball is below, paddle moves down
-			paddle.y -= paddle.speed * elapsedTime
-			paddle.yv = -paddle.speed
-		} else {
-			paddle.yv = 0
-		}
-	}
 }
 
 func clear(pixels []byte) {
