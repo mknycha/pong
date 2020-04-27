@@ -58,7 +58,7 @@ func (paddle *paddle) aiUpdate(ball *ball, elapsedTime float32) {
 		if (paddle.y + paddlePixelsRangeForCalculation) < ball.y { // ball is above, paddle moves up
 			paddle.y += paddle.speed * elapsedTime
 			paddle.yv = paddle.speed
-		} else if (paddle.y-paddlePixelsRangeForCalculation) > ball.y && (paddle.x-ball.x) < (float32(windowWidth)*3/4) { // ball is below, paddle moves down
+		} else if (paddle.y - paddlePixelsRangeForCalculation) > ball.y { // ball is below, paddle moves down
 			paddle.y -= paddle.speed * elapsedTime
 			paddle.yv = -paddle.speed
 		} else {
