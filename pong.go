@@ -10,7 +10,6 @@ import (
 
 // TODO
 // Make the ball go faster and faster with each bounce
-// Make the paddle unable to go out of the screen
 // PvP ?
 
 const windowWidth = 800
@@ -193,10 +192,10 @@ func (paddle *paddle) draw(pixels []byte) {
 }
 
 func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime float32) {
-	if keyState[sdl.SCANCODE_UP] != 0 {
+	if keyState[sdl.SCANCODE_UP] != 0 && paddle.y > 0 {
 		paddle.y -= paddle.speed * elapsedTime
 		paddle.yv = -paddle.speed
-	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
+	} else if keyState[sdl.SCANCODE_DOWN] != 0 && paddle.y < windowHeight {
 		paddle.y += paddle.speed * elapsedTime
 		paddle.yv = paddle.speed
 	} else {
