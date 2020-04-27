@@ -9,6 +9,7 @@ import (
 )
 
 // TODO
+// Display message in the screen like "press spacebar", or "you win"
 // PvP ?
 
 const windowWidth = 800
@@ -17,6 +18,7 @@ const paddleConvexityEffectMultiplier = 150
 const paddleVelocityEffectMultiplier = 15
 const velocityAfterBounceMultiplier = 1.01
 const initialBallXV = 400
+const paddlePixelsRangeForCalculation = 4
 
 // This kind of enum in GO
 type gameState int
@@ -211,10 +213,11 @@ func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime
 
 func (paddle *paddle) aiUpdate(ball *ball, elapsedTime float32) {
 	if (paddle.x - ball.x) < (float32(windowWidth) * 3 / 4) { // ball is close enough to be "seen"
-		if paddle.y < ball.y { // ball is above, paddle moves up
+		// paddlePixelsRangeForCalculation is used so that paddle is not moved with pixel precision
+		if (paddle.y + paddlePixelsRangeForCalculation) < ball.y { // ball is above, paddle moves up
 			paddle.y += paddle.speed * elapsedTime
 			paddle.yv = paddle.speed
-		} else if paddle.y > ball.y && (paddle.x-ball.x) < (float32(windowWidth)*3/4) { // ball is below, paddle moves down
+		} else if (paddle.y-paddlePixelsRangeForCalculation) > ball.y && (paddle.x-ball.x) < (float32(windowWidth)*3/4) { // ball is below, paddle moves down
 			paddle.y -= paddle.speed * elapsedTime
 			paddle.yv = -paddle.speed
 		} else {
