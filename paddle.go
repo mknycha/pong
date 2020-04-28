@@ -46,7 +46,7 @@ func (paddle *paddle) update(keyState []uint8, controllerAxis int16, elapsedTime
 		paddle.yv = 0
 	}
 
-	if math.Abs(float64(controllerAxis)) > 1500 {
+	if math.Abs(float64(controllerAxis)) > 1500 && paddle.y < windowHeight && paddle.y > 0 {
 		pct := float32(controllerAxis) / 32767.0
 		paddle.y += paddle.speed * pct * elapsedTime
 	}

@@ -9,6 +9,8 @@ import (
 
 // TODO
 // Display message in the screen like "press spacebar", or "you win"
+// Add bonuses
+// Change graphics - can ball make this motion "shadow" effect?
 // PvP ?
 
 const windowWidth = 800
@@ -122,7 +124,9 @@ func main() {
 	}
 	defer sdl.Quit()
 
-	window, err := sdl.CreateWindow("Testing SDL2", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
+	sdl.JoystickEventState(sdl.ENABLE)
+
+	window, err := sdl.CreateWindow("PONG", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		int32(windowWidth), int32(windowHeight), sdl.WINDOW_SHOWN)
 	if err != nil {
 		fmt.Println(err)
@@ -144,10 +148,10 @@ func main() {
 	}
 	defer tex.Destroy()
 
-	var controllerHandlers []*sdl.GameController
+	var joystickHandlers []*sdl.Joystick
 	for i := 0; i < sdl.NumJoysticks(); i++ {
-		controllerHandlers = append(controllerHandlers, sdl.GameControllerOpen(i))
-		defer controllerHandlers[i].Close()
+		joystickHandlers = append(joystickHandlers, sdl.JoystickOpen(i))
+		defer joystickHandlers[i].Close()
 	}
 
 	pixels := make([]byte, windowWidth*windowHeight*4)
@@ -162,7 +166,7 @@ func main() {
 		frameStart  time.Time
 		elapsedTime float32
 	)
-	var controllerAxis int16
+	var joystickAxis int16
 
 	running := true
 	for running {
@@ -175,14 +179,13 @@ func main() {
 				break
 			}
 		}
-		for _, controller := range controllerHandlers {
-			if controller != nil {
-				println(controller)
-				controllerAxis = controller.Axis(sdl.CONTROLLER_AXIS_LEFTY)
+		for _, joystick := range joystickHandlers {
+			if joystick != nil {
+				joystickAxis = joystick.Axis(sdl.CONTROLLER_AXIS_LEFTY)
 			}
 		}
 		if state == play {
-			player1.update(keyState, controllerAxis, elapsedTime)
+			player1.update(keyState, joystickAxis, elapsedTime)
 			player2.aiUpdate(&ball, elapsedTime)
 			ball.update(&player1, &player2, elapsedTime)
 		} else if state == start {
