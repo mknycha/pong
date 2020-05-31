@@ -12,24 +12,13 @@ type paddle struct {
 	h     float32
 	speed float32
 	score int
-	color color
 	yv    float32
+	color color
+	tex   texture
 }
 
 func (paddle *paddle) draw(pixels []byte) {
-	startX := int(paddle.x - paddle.w/2)
-	startY := int(paddle.y - paddle.h/2)
-
-	// There is a reason to start with y, because it uses ram cache
-	// If we load to our RAM 0, 1, 2, 3, 4, 5, 6, 7, 8 we will go through order and be in cache
-	// 0, 1, 2,
-	// 3, 4, 5,
-	// 6, 7, 8
-	for y := 0; y < int(paddle.h); y++ {
-		for x := 0; x < int(paddle.w); x++ {
-			setPixel(startX+x, startY+y, paddle.color, pixels)
-		}
-	}
+	paddle.tex.drawAlpha(pos{paddle.x, paddle.y}, pixels)
 
 	numX := lerp(paddle.x, getCenter().x, 0.2)
 	drawNumber(pos{numX, 35}, paddle.color, 10, paddle.score, pixels)

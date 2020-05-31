@@ -206,9 +206,12 @@ func main() {
 
 	pixels := make([]byte, windowWidth*windowHeight*4)
 
-	player1 := paddle{pos{50, windowHeight / 2}, 20, 100, 300, 0, color{255, 255, 255}, 0}
-	player2 := paddle{pos{windowWidth - 50, windowHeight / 2}, 20, 100, 300, 0, color{255, 255, 255}, 0}
-	ball := ball{pos{300, 300}, 20, initialBallXV, 0, color{255, 255, 255}}
+	player1Texture := loadTexture("assets/pyramid_left.png")
+	player2Texture := loadTexture("assets/pyramid_right.png")
+	player1 := paddle{pos{50, windowHeight / 2}, float32(player1Texture.w), float32(player2Texture.h), 300, 0, 0, color{255, 255, 255}, player1Texture}
+	player2 := paddle{pos{windowWidth - 50, windowHeight / 2}, float32(player1Texture.w), float32(player2Texture.h), 300, 0, 0, color{255, 255, 255}, player2Texture}
+	ballTexture := loadTexture("assets/ball.png")
+	ball := ball{pos{300, 300}, float32(ballTexture.w / 2), initialBallXV, 0, ballTexture}
 
 	keyState := sdl.GetKeyboardState()
 

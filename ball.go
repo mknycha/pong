@@ -6,17 +6,11 @@ type ball struct {
 	radius float32
 	xv     float32
 	yv     float32
-	color  color
+	tex    texture
 }
 
 func (ball *ball) draw(pixels []byte) {
-	for y := -ball.radius; y < ball.radius; y++ {
-		for x := -ball.radius; x < ball.radius; x++ {
-			if x*x+y*y < ball.radius*ball.radius {
-				setPixel(int(ball.x+x), int(ball.y+y), ball.color, pixels)
-			}
-		}
-	}
+	ball.tex.drawAlpha(ball.pos, pixels)
 }
 
 func (ball *ball) update(leftPaddle *paddle, rightPaddle *paddle, elapsedTime float32) {
