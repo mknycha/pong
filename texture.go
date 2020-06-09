@@ -63,7 +63,7 @@ func (tex *texture) drawAlpha(position pos, pixels []byte) {
 	}
 }
 
-func loadTexture(filepath string) texture {
+func loadTexture(filepath string, invertedHorizontally bool) texture {
 	infile, err := os.Open(filepath)
 	if err != nil {
 		panic(err)
@@ -82,7 +82,11 @@ func loadTexture(filepath string) texture {
 	bIndex := 0
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			r, g, b, a := img.At(x, y).RGBA()
+			tempX := x
+			if invertedHorizontally {
+				tempX = w - x
+			}
+			r, g, b, a := img.At(tempX, y).RGBA()
 			texturePixels[bIndex] = byte(r / 256)
 			bIndex++
 			texturePixels[bIndex] = byte(g / 256)
